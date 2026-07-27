@@ -2,7 +2,7 @@ import 'dart:ui';
 
 import 'package:flutter/material.dart';
 
-/// ios 风格液态玻璃底部 tab 容器。
+/// ios‑style liquid‑glass bottom tab bar with ripple click effect.
 /// 只包一层视觉效果，不改 BottomNavigationBar2 逻辑。
 class GlassBottomBar extends StatelessWidget {
   final Widget child;
@@ -10,6 +10,7 @@ class GlassBottomBar extends StatelessWidget {
   final double height;
   final EdgeInsetsGeometry? margin;
   final double borderRadius;
+  final Color? rippleColor;
 
   const GlassBottomBar({
     Key? key,
@@ -20,28 +21,34 @@ class GlassBottomBar extends StatelessWidget {
     this.margin,
     // 更圆一点，接近悬浮 capsule
     this.borderRadius = 28,
+    // ripple color, defaults to white with slight opacity
+    this.rippleColor,
   }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    // 更透：亮色约 22%~28%，暗色约 8%~14%
+    // 更透：亮色约 30%~35%，暗色约 18%~22%
     final fillTop = isDark
         ? Colors.white.withOpacity(0.12)
-        : Colors.white.withOpacity(0.28);
+        : Colors.white.withOpacity(0.30);
     final fillBottom = isDark
-        ? Colors.white.withOpacity(0.06)
-        : Colors.white.withOpacity(0.16);
+        ? Colors.white.withOpacity(0.08)
+        : Colors.white.withOpacity(0.18);
     final border = isDark
         ? Colors.white.withOpacity(0.22)
         : Colors.white.withOpacity(0.55);
-    final innerHighlight = isDark
+    final highlight = isDark
         ? Colors.white.withOpacity(0.10)
         : Colors.white.withOpacity(0.40);
     final shadow = isDark
         ? Colors.black.withOpacity(0.28)
         : Colors.black.withOpacity(0.10);
+    final ripple = rippleColor ??
+        (isDark
+            ? Colors.white.withOpacity(0.25)
+            : Colors.white.withOpacity(0.35));
 
     final bar = Container(
       decoration: BoxDecoration(
@@ -50,7 +57,7 @@ class GlassBottomBar extends StatelessWidget {
           BoxShadow(
             color: shadow,
             blurRadius: 12,
-            offset: const Offset(0, 10),
+            offset: const Offset(0, 8),
           ),
         ],
       ),
@@ -63,7 +70,6 @@ class GlassBottomBar extends StatelessWidget {
             width: double.infinity,
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(borderRadius),
-              // 外层更透的液态玻璃渐变
               gradient: LinearGradient(
                 begin: Alignment.topCenter,
                 end: Alignment.bottomCenter,
@@ -72,7 +78,7 @@ class GlassBottomBar extends StatelessWidget {
                   fillBottom,
                 ],
               ),
-              border: Border.all(color: border, width: 0.8),
+              border: Border.all(color: border, width: 1.0),
             ),
             child: Stack(
               fit: StackFit.expand,
@@ -88,7 +94,7 @@ class GlassBottomBar extends StatelessWidget {
                       gradient: LinearGradient(
                         colors: [
                           Colors.transparent,
-                          innerHighlight,
+                          highlight,
                           Colors.transparent,
                         ],
                       ),
@@ -105,19 +111,25 @@ class GlassBottomBar extends StatelessWidget {
                           ? [
                               Colors.white.withOpacity(0.04),
                               Colors.transparent,
-                              Colors.black.withOpacity(0.05),
+                              Colors.black.withOpacity(0.08),
                             ]
                           : [
                               Colors.white.withOpacity(0.18),
                               Colors.transparent,
-                              Colors.white.withOpacity(0.10),
+                              Colors.white.withOpacity(0.06),
                             ],
                     ),
                   ),
                 ),
+                // 包裹 child（BottomNavigationBar2）实现 ripple
                 Material(
-                  type: MaterialType.transparency,
-                  child: child,
+                  color: Colors.transparent,
+                  child: InkWell(
+                    borderRadius: BorderRadius.circular(borderRadius),
+                    splashColor: ripple,
+                    highlightColor: ripple.withOpacity(0.8),
+                    child: child,
+                  ),
                 ),
               ],
             ),
