@@ -161,7 +161,7 @@ class ThemeViewModel extends ChangeNotifier {
       ),
       bottomNavigationBarTheme: BottomNavigationBarThemeData(
         selectedItemColor: _primaryColor,
-        backgroundColor: const Color(0xBBF9F9F9),
+        backgroundColor: const Color(0x66F9F9F9),
         elevation: 0,
       ),
       buttonTheme: ButtonThemeData(
@@ -278,7 +278,7 @@ class ThemeViewModel extends ChangeNotifier {
       ),
       bottomNavigationBarTheme: BottomNavigationBarThemeData(
         selectedItemColor: _primaryColor,
-        backgroundColor: const Color(0xBBF9F9F9),
+        backgroundColor: const Color(0x66F9F9F9),
         elevation: 0,
       ),
       buttonTheme: ButtonThemeData(
@@ -363,7 +363,7 @@ class ThemeViewModel extends ChangeNotifier {
       ),
       bottomNavigationBarTheme: BottomNavigationBarThemeData(
         selectedItemColor: _primaryColor,
-        backgroundColor: const Color(0x991B1B1B),
+        backgroundColor: const Color(0x661B1B1B),
         elevation: 0,
       ),
       hintColor: const Color(0xffBBBBBB),

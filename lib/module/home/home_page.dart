@@ -12,6 +12,7 @@ import 'package:qinglong_app/base/sp_const.dart';
 import 'package:qinglong_app/base/theme.dart';
 import 'package:qinglong_app/base/ui/bottom_nav_bar.dart';
 import 'package:qinglong_app/base/ui/custom_bg.dart';
+import 'package:qinglong_app/base/ui/glass_bottom_bar.dart';
 import 'package:qinglong_app/main.dart';
 import 'package:qinglong_app/module/config/config_page.dart';
 import 'package:qinglong_app/module/env/env_page.dart';
@@ -256,80 +257,69 @@ class HomePageState extends ConsumerState<HomePage> {
                     ),
                   ],
                 ),
-                bottomNavigationBar: ClipRect(
-                  child: BackdropFilter(
-                    filter: ImageFilter.blur(sigmaX: 10.0, sigmaY: 10.0),
-                    child: Container(
-                      height: kBottomNavigationBarHeight + MediaQuery.of(context).padding.bottom,
-                      width: MediaQuery.of(context).size.width,
-                      color: ref
-                          .watch(themeProvider)
-                          .currentTheme
-                          .bottomNavigationBarTheme
-                          .backgroundColor,
-                      child: BottomNavigationBar2(
-                        backgroundColor: Colors.transparent,
-                        items: titles
-                            .map(
-                              (e) => BottomNavigationBarItem(
-                                icon: Image.asset(
-                                  e.icon,
-                                  fit: BoxFit.cover,
-                                  width: 20,
-                                  height: 20,
-                                ),
-                                activeIcon: Image.asset(
-                                  e.checkedIcon,
-                                  fit: BoxFit.cover,
-                                  width: 20,
-                                  height: 20,
-                                ),
-                                label: e.title,
-                              ),
-                            )
-                            .toList(),
-                        currentIndex: ref.watch<int>(SingleAccountPageState.ofHomeIndexProvider(
-                            context)(getProviderName(context))),
-                        onTap: (index) async {
-                          if (ref.read<int>((SingleAccountPageState.ofHomeIndexProvider(context)(
-                                  getProviderName(context)))) ==
-                              index) {
-                            // 0 仪表盘 / 1 任务 / 2 环境 / 4 我的
-                            if (index == 0) {
-                              await statsKey.currentState?.move2Top();
-                            } else if (index == 1) {
-                              await taskKey.currentState?.move2Top();
-                            } else if (index == 2) {
-                              await envKey.currentState?.move2Top();
-                            } else if (index == 4) {
-                              await meKey.currentState?.move2Top();
-                            }
-                            return;
-                          } else {
-                            ref
-                                .read(SingleAccountPageState.ofHomeIndexProvider(context)(
-                                        getProviderName(context))
-                                    .notifier)
-                                .state = index;
-                          }
-                        },
-                        elevation: 0,
-                        selectedFontSize: 12,
-                        unselectedFontSize: 12,
-                        type: BottomNavigationBarType.fixed,
-                        showSelectedLabels: true,
-                        showUnselectedLabels: true,
-                        onLongTap: (index) async {
-                          // 我的 tab（现为第 5 项，index=4）长按切换账号
-                          if (index == 4) {
-                            HapticFeedback.mediumImpact();
-                            setState(() {
-                              showMask = true;
-                            });
-                          }
-                        },
-                      ),
-                    ),
+                bottomNavigationBar: GlassBottomBar(
+                  height: kBottomNavigationBarHeight,
+                  child: BottomNavigationBar2(
+                    backgroundColor: Colors.transparent,
+                    items: titles
+                        .map(
+                          (e) => BottomNavigationBarItem(
+                            icon: Image.asset(
+                              e.icon,
+                              fit: BoxFit.cover,
+                              width: 20,
+                              height: 20,
+                            ),
+                            activeIcon: Image.asset(
+                              e.checkedIcon,
+                              fit: BoxFit.cover,
+                              width: 20,
+                              height: 20,
+                            ),
+                            label: e.title,
+                          ),
+                        )
+                        .toList(),
+                    currentIndex: ref.watch<int>(SingleAccountPageState.ofHomeIndexProvider(
+                        context)(getProviderName(context))),
+                    onTap: (index) async {
+                      if (ref.read<int>((SingleAccountPageState.ofHomeIndexProvider(context)(
+                              getProviderName(context)))) ==
+                          index) {
+                        // 0 仪表盘 / 1 任务 / 2 环境 / 4 我的
+                        if (index == 0) {
+                          await statsKey.currentState?.move2Top();
+                        } else if (index == 1) {
+                          await taskKey.currentState?.move2Top();
+                        } else if (index == 2) {
+                          await envKey.currentState?.move2Top();
+                        } else if (index == 4) {
+                          await meKey.currentState?.move2Top();
+                        }
+                        return;
+                      } else {
+                        ref
+                            .read(SingleAccountPageState.ofHomeIndexProvider(context)(
+                                    getProviderName(context))
+                                .notifier)
+                            .state = index;
+                      }
+                    },
+                    elevation: 0,
+                    selectedFontSize: 12,
+                    unselectedFontSize: 12,
+                    type: BottomNavigationBarType.fixed,
+                    showSelectedLabels: true,
+                    showUnselectedLabels: true,
+                    onLongTap: (index) async {
+                      // 我的 tab（现为第 5 项，index=4）长按切换账号
+                      if (index == 4) {
+                        HapticFeedback.mediumImpact();
+                        setState(() {
+                          showMask = true;
+                        });
+                      }
+                    },
                   ),
                 ),
               ),

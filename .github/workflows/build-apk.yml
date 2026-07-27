@@ -3,6 +3,7 @@ name: build-apk
 on:
   workflow_dispatch:
   push:
+    branches: [ main, master ]
     tags:
       - "v*"
 
@@ -72,7 +73,7 @@ jobs:
       - name: upload apk
         uses: actions/upload-artifact@v4
         with:
-          name: qinglong-app-apk
+          name: qinglong-glass-apk
           path: build/app/outputs/flutter-apk/*.apk
           if-no-files-found: error
 
