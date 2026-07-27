@@ -16,7 +16,7 @@ class GlassBottomBar extends StatelessWidget {
     required this.child,
     required this.height,
     // 更强模糊，接近系统毛玻璃
-    this.blurSigma = 36,
+    this.blurSigma = 18,
     this.margin,
     // 更圆一点，接近悬浮 capsule
     this.borderRadius = 28,
@@ -49,7 +49,7 @@ class GlassBottomBar extends StatelessWidget {
         boxShadow: [
           BoxShadow(
             color: shadow,
-            blurRadius: 24,
+            blurRadius: 16,
             offset: const Offset(0, 10),
           ),
         ],
@@ -110,7 +110,7 @@ class GlassBottomBar extends StatelessWidget {
                           : [
                               Colors.white.withOpacity(0.18),
                               Colors.transparent,
-                              Colors.white.withOpacity(0.06),
+                              Colors.white.withOpacity(0.10),
                             ],
                     ),
                   ),
