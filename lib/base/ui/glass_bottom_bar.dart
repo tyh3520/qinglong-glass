@@ -26,8 +26,8 @@ class GlassBottomBar extends StatefulWidget {
     required this.height,
     required this.currentIndex,
     required this.itemCount,
-    this.blurSigma = 18,
-    this.glassOpacity = 1.0,
+    this.blurSigma = 14,
+    this.glassOpacity = 0.55,
     this.backdropKey,
     this.refraction = true,
     this.margin,
@@ -276,12 +276,12 @@ class _GlassBottomBarState extends State<GlassBottomBar>
           LiquidLensLayer(
             backdropKey: widget.backdropKey!,
             borderRadius: widget.borderRadius,
-            // 折射越强越"厚"，但也越容易糊掉图标，这里跟边框宽度量级对齐
-            refractionHeight: 20,
-            refractionAmount: 18,
-            depthEffect: 0.35,
-            chromaticAberration: 0.4,
-            opacity: 0.9,
+            // 边缘带要窄于图标到边框的留白，否则折射会盖到图标上
+            refractionHeight: 13,
+            refractionAmount: 12,
+            depthEffect: 0.3,
+            chromaticAberration: 0.35,
+            opacity: 0.85,
           ),
 
         // 跟随光斑：滑动时更亮，停下后回落

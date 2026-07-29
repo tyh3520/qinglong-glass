@@ -1,46 +1,53 @@
-import 'dart:async';
 import 'dart:ui' as ui;
 
 import 'package:flutter/rendering.dart';
+import 'package:flutter/scheduler.dart';
 import 'package:flutter/widgets.dart';
 
 /// 液态玻璃折射层（路线 2）。
 ///
-/// 工作方式与 wekit 的 AGSL 版本不同，原因是 Flutter 3.7 没有
-/// `ImageFilter.shader`（那是 Impeller-only 的新 API），也没有 AGSL
-/// `content.eval()` 那种"直接采样当前图层"的能力。所以这里的流程是：
+/// Flutter 3.7 没有 `ImageFilter.shader`（Impeller-only 的新 API），也没有
+/// AGSL `content.eval()` 那种"直接采样当前图层"的能力。所以背景位图由 Dart 侧
+/// 从 [backdropKey] 指向的 [RepaintBoundary] 抓取，当 `sampler2D` 喂给
+/// `shaders/liquid_glass_lens.frag`。
 ///
-/// 1. 页面 body 外面套一个 [RepaintBoundary]，拿 [backdropKey] 引用它。
-/// 2. 每帧在 paint 里 `toImageSync()` 抓一张背景位图。
-/// 3. 把位图当 `sampler2D` 喂给 `shaders/liquid_glass_lens.frag`，
-///    着色器只在圆角矩形的边缘带上做折射采样，内部输出透明。
+/// 着色器只在圆角矩形的**边缘带**上做折射采样，带内以外输出全透明，
+/// 底下的 `BackdropFilter` 模糊照旧生效，两者叠加才是完整效果。
 ///
-/// 因此本层只负责"边缘折射 + 色散"，底下的 `BackdropFilter` 模糊照旧生效，
-/// 两者叠加才是完整效果。
+/// ## 抓图时机
+///
+/// 抓图**不能在 paint 里做**。`toImageSync()` 会同步 raster 目标图层，
+/// 在 `CustomPainter.paint` 执行期间调用它，等于在绘制途中递归进合成器，
+/// 抛出的异常会让当前 canvas 的 save/clip 栈失衡 —— 后续同一 Stack 里的
+/// 兄弟节点（包括导航栏的图标和文字）会被残留的裁剪吃掉，表现为整块消失。
+///
+/// 所以改成 [SchedulerBinding.addPostFrameCallback] 里抓，画的时候用**上一帧**
+/// 的位图。折射是背景的镜像，延迟一帧完全看不出来。
 ///
 /// 抓图用 `pixelRatio: 1.0`：背景本来就要被模糊和折射，多余的分辨率看不出来，
-/// 但每帧全屏拷贝的开销会按平方增长，低端机吃不消。
+/// 但全屏拷贝的开销按平方增长，低端机吃不消。
 ///
 /// 着色器不可用时（加载失败、平台不支持）本层渲染为空，
-/// 视觉自动退回路线 1 的纯 Dart 玻璃，不会崩也不会留白。
+/// 视觉自动退回纯 Dart 玻璃，不崩也不留白。
 class LiquidLensLayer extends StatefulWidget {
   const LiquidLensLayer({
     Key? key,
     required this.backdropKey,
     required this.borderRadius,
-    this.refractionHeight = 22,
-    this.refractionAmount = 20,
-    this.depthEffect = 0.35,
-    this.chromaticAberration = 0.4,
+    this.refractionHeight = 14,
+    this.refractionAmount = 12,
+    this.depthEffect = 0.3,
+    this.chromaticAberration = 0.35,
     this.opacity = 1.0,
   }) : super(key: key);
 
-  /// 指向包裹页面内容的 [RepaintBoundary]。为空或尚未挂载时本层不绘制。
+  /// 指向包裹页面内容的 [RepaintBoundary]。
   final GlobalKey backdropKey;
 
   final double borderRadius;
 
   /// 边缘带宽度，视觉上等于"玻璃厚度"。
+  /// 注意别超过图标到边框的留白，否则折射会盖到图标上。
   final double refractionHeight;
 
   /// 采样偏移量，越大边缘扭曲越强。
@@ -69,7 +76,7 @@ class _LiquidLensLayerState extends State<LiquidLensLayer> {
     ).then<ui.FragmentProgram?>((ui.FragmentProgram p) => p).catchError(
       (Object e, StackTrace st) {
         // 老设备 / 不支持 runtime shader 的平台会走到这里。
-        // 静默降级，不要把整个底栏搞挂。
+        // 静默降级，别把整个底栏搞挂。
         debugPrint('[LiquidLensLayer] shader 加载失败，降级为普通玻璃: $e');
         return null;
       },
@@ -78,42 +85,102 @@ class _LiquidLensLayerState extends State<LiquidLensLayer> {
 
   ui.FragmentShader? _shader;
 
+  /// 上一帧抓到的背景。画的时候用它，抓的时候换新的。
+  ui.Image? _backdrop;
+
+  /// 本层左上角在 [_backdrop] 坐标系里的偏移。
+  Offset _origin = Offset.zero;
+
+  bool _scheduled = false;
+  bool _disposed = false;
+
   @override
   void initState() {
     super.initState();
     _loadProgram().then((ui.FragmentProgram? program) {
-      if (!mounted || program == null) return;
+      if (_disposed || program == null) return;
       setState(() {
         _shader = program.fragmentShader();
       });
+      _scheduleCapture();
     });
   }
 
   @override
   void dispose() {
+    _disposed = true;
+    _backdrop?.dispose();
+    _backdrop = null;
     _shader?.dispose();
     super.dispose();
+  }
+
+  /// 每帧结束后抓一次背景，并立刻排下一次，形成持续更新。
+  void _scheduleCapture() {
+    if (_disposed || _scheduled || _shader == null) return;
+    _scheduled = true;
+    SchedulerBinding.instance.addPostFrameCallback((_) {
+      _scheduled = false;
+      if (_disposed) return;
+      _capture();
+      // 背景可能一直在动（列表滚动），所以持续抓。
+      _scheduleCapture();
+    });
+  }
+
+  void _capture() {
+    final RenderObject? backdropRender =
+        widget.backdropKey.currentContext?.findRenderObject();
+    if (backdropRender is! RenderRepaintBoundary) return;
+    if (!backdropRender.hasSize || backdropRender.size.isEmpty) return;
+    // 还没画完就抓会拿到空图层
+    if (backdropRender.debugNeedsPaint) return;
+
+    final RenderObject? selfRender = context.findRenderObject();
+    if (selfRender is! RenderBox || !selfRender.hasSize) return;
+
+    ui.Image? fresh;
+    try {
+      fresh = backdropRender.toImageSync(pixelRatio: 1.0);
+      // pixelRatio 取 1.0，逻辑坐标与图像像素 1:1，不用再换算
+      final Offset origin = selfRender.localToGlobal(Offset.zero) -
+          backdropRender.localToGlobal(Offset.zero);
+
+      final ui.Image? stale = _backdrop;
+      _backdrop = fresh;
+      _origin = origin;
+      fresh = null; // 交出所有权，下面的 finally 不该回收它
+      stale?.dispose();
+
+      if (!_disposed) setState(() {});
+    } catch (e) {
+      debugPrint('[LiquidLensLayer] 背景抓取失败，沿用上一帧: $e');
+    } finally {
+      fresh?.dispose();
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     final ui.FragmentShader? shader = _shader;
-    if (shader == null) {
+    final ui.Image? backdrop = _backdrop;
+    if (shader == null || backdrop == null) {
       return const SizedBox.shrink();
     }
-    return CustomPaint(
-      painter: _LensPainter(
-        shader: shader,
-        backdropKey: widget.backdropKey,
-        selfContext: context,
-        borderRadius: widget.borderRadius,
-        refractionHeight: widget.refractionHeight,
-        refractionAmount: widget.refractionAmount,
-        depthEffect: widget.depthEffect,
-        chromaticAberration: widget.chromaticAberration,
-        opacity: widget.opacity,
+    return IgnorePointer(
+      child: CustomPaint(
+        painter: _LensPainter(
+          shader: shader,
+          backdrop: backdrop,
+          origin: _origin,
+          borderRadius: widget.borderRadius,
+          refractionHeight: widget.refractionHeight,
+          refractionAmount: widget.refractionAmount,
+          depthEffect: widget.depthEffect,
+          chromaticAberration: widget.chromaticAberration,
+          opacity: widget.opacity,
+        ),
       ),
-      size: Size.infinite,
     );
   }
 }
@@ -121,8 +188,8 @@ class _LiquidLensLayerState extends State<LiquidLensLayer> {
 class _LensPainter extends CustomPainter {
   _LensPainter({
     required this.shader,
-    required this.backdropKey,
-    required this.selfContext,
+    required this.backdrop,
+    required this.origin,
     required this.borderRadius,
     required this.refractionHeight,
     required this.refractionAmount,
@@ -132,8 +199,8 @@ class _LensPainter extends CustomPainter {
   });
 
   final ui.FragmentShader shader;
-  final GlobalKey backdropKey;
-  final BuildContext selfContext;
+  final ui.Image backdrop;
+  final Offset origin;
   final double borderRadius;
   final double refractionHeight;
   final double refractionAmount;
@@ -145,25 +212,10 @@ class _LensPainter extends CustomPainter {
   void paint(Canvas canvas, Size size) {
     if (size.isEmpty || opacity <= 0) return;
 
-    final RenderObject? backdropRender =
-        backdropKey.currentContext?.findRenderObject();
-    if (backdropRender is! RenderRepaintBoundary) return;
-    // 布局还没跑完时抓图会抛异常，直接跳过这一帧。
-    if (!backdropRender.hasSize || backdropRender.debugNeedsPaint) return;
-
-    final RenderObject? selfRender = selfContext.findRenderObject();
-    if (selfRender is! RenderBox || !selfRender.hasSize) return;
-
-    ui.Image? backdrop;
+    // save/restore 必须严格配对：这里和兄弟节点（导航栏图标、文字）共用同一个
+    // canvas，任何一次泄漏的 save 或 clip 都会把后面画的东西吃掉。
+    canvas.save();
     try {
-      backdrop = backdropRender.toImageSync(pixelRatio: 1.0);
-
-      // 本层左上角在背景图坐标系里的位置。
-      // pixelRatio 取 1.0，所以逻辑坐标和图像像素是 1:1，不用再换算。
-      final Offset globalSelf = selfRender.localToGlobal(Offset.zero);
-      final Offset globalBackdrop = backdropRender.localToGlobal(Offset.zero);
-      final Offset origin = globalSelf - globalBackdrop;
-
       shader
         ..setFloat(0, size.width)
         ..setFloat(1, size.height)
@@ -183,27 +235,31 @@ class _LensPainter extends CustomPainter {
         ..setFloat(11, opacity.clamp(0.0, 1.0).toDouble())
         ..setImageSampler(0, backdrop);
 
-      final RRect rrect = RRect.fromRectAndRadius(
-        Offset.zero & size,
-        Radius.circular(borderRadius),
+      // 着色器自己也用 SDF 挡了形状外，这里再夹一次是防抗锯齿溢出
+      canvas.clipRRect(
+        RRect.fromRectAndRadius(
+          Offset.zero & size,
+          Radius.circular(borderRadius),
+        ),
       );
-      canvas.save();
-      // 着色器自己也用 SDF 挡了形状外，这里再夹一次是为了防抗锯齿溢出
-      canvas.clipRRect(rrect);
       canvas.drawRect(Offset.zero & size, Paint()..shader = shader);
-      canvas.restore();
     } catch (e) {
       debugPrint('[LiquidLensLayer] 折射绘制失败，本帧跳过: $e');
     } finally {
-      // 每帧一张全屏图，不回收会迅速吃满显存
-      backdrop?.dispose();
+      canvas.restore();
     }
   }
 
   @override
   bool shouldRepaint(_LensPainter old) {
-    // 背景每帧都可能变（列表滚动），所以恒为 true。
-    // 外层已经用 RepaintBoundary 把重绘范围限制在底栏内。
-    return true;
+    return old.backdrop != backdrop ||
+        old.origin != origin ||
+        old.shader != shader ||
+        old.borderRadius != borderRadius ||
+        old.refractionHeight != refractionHeight ||
+        old.refractionAmount != refractionAmount ||
+        old.depthEffect != depthEffect ||
+        old.chromaticAberration != chromaticAberration ||
+        old.opacity != opacity;
   }
 }
