@@ -11,6 +11,7 @@ import 'package:qinglong_app/base/routes.dart';
 import 'package:qinglong_app/base/single_account_page.dart';
 import 'package:qinglong_app/base/sp_const.dart';
 import 'package:qinglong_app/base/theme.dart';
+import 'package:qinglong_app/base/ui/glass_segmented_header.dart';
 import 'package:qinglong_app/base/ui/glass_edit_bar.dart';
 import 'package:qinglong_app/base/ui/loading_widget.dart';
 import 'package:qinglong_app/base/ui/search_cell.dart';
@@ -1269,8 +1270,7 @@ class SliverTabBarDelegate extends SliverPersistentHeaderDelegate {
       height: 55,
       child: IgnorePointer(
         ignoring: editMode,
-        child: ColoredBox(
-          color: ref.watch(themeProvider).currentTheme.scaffoldBackgroundColor,
+        child: GlassSegmentedBar(
           child: Padding(
             padding: const EdgeInsets.only(
               left: 15,
@@ -1316,14 +1316,8 @@ class SliverTabBarDelegate extends SliverPersistentHeaderDelegate {
                   ),
                 ),
               },
-              decoration: BoxDecoration(
-                color: ref.watch(themeProvider).themeColor.segmentedUnCheckBg(),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              thumbDecoration: BoxDecoration(
-                color: ref.watch(themeProvider).themeColor.blackAndWhite(),
-                borderRadius: BorderRadius.circular(6),
-              ),
+              decoration: glassSegmentedTrack(context),
+              thumbDecoration: glassSegmentedThumb(context, ref),
               duration: const Duration(milliseconds: 300),
               curve: Curves.easeInToLinear,
               onValueChanged: (v) {
