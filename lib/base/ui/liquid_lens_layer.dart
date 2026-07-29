@@ -133,14 +133,17 @@ class _LiquidLensLayerState extends State<LiquidLensLayer> {
         widget.backdropKey.currentContext?.findRenderObject();
     if (backdropRender is! RenderRepaintBoundary) return;
     if (!backdropRender.hasSize || backdropRender.size.isEmpty) return;
-    // 还没画完就抓会拿到空图层
-    if (backdropRender.debugNeedsPaint) return;
 
     final RenderObject? selfRender = context.findRenderObject();
     if (selfRender is! RenderBox || !selfRender.hasSize) return;
 
     ui.Image? fresh;
     try {
+      // 不要用 debugNeedsPaint 做守卫：它的实现把返回值写在 assert 里，
+      // release 构建 assert 被剥掉 → 读到未初始化的 late 变量 → 抛
+      // LateInitializationError。debug 跑得好好的，正式包每帧都炸，
+      // 结果就是永远抓不到背景、折射整个消失。
+      // postFrameCallback 本身已经保证这一帧画完了，无需额外守卫。
       fresh = backdropRender.toImageSync(pixelRatio: 1.0);
       // pixelRatio 取 1.0，逻辑坐标与图像像素 1:1，不用再换算
       final Offset origin = selfRender.localToGlobal(Offset.zero) -
