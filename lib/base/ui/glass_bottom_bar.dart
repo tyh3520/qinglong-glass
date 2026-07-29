@@ -3,6 +3,7 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/physics.dart';
 import 'package:flutter/scheduler.dart';
+import 'package:qinglong_app/base/ui/liquid_lens_layer.dart';
 
 /// 液态玻璃底部 tab 栏。
 ///
@@ -27,6 +28,8 @@ class GlassBottomBar extends StatefulWidget {
     required this.itemCount,
     this.blurSigma = 18,
     this.glassOpacity = 1.0,
+    this.backdropKey,
+    this.refraction = true,
     this.margin,
     this.borderRadius = 28,
     this.pillColor,
@@ -56,6 +59,13 @@ class GlassBottomBar extends StatefulWidget {
   ///
   /// 不影响 [blurSigma]（模糊）和阴影，只影响白色蒙层的浓度。
   final double glassOpacity;
+
+  /// 指向包裹页面内容的 [RepaintBoundary]，折射层靠它采样背景像素。
+  /// 不传则不做折射，视觉退回纯 Dart 玻璃。
+  final GlobalKey? backdropKey;
+
+  /// 是否启用 shader 边缘折射。着色器加载失败时会自动降级，无需手动关。
+  final bool refraction;
 
   final EdgeInsetsGeometry? margin;
 
@@ -260,6 +270,20 @@ class _GlassBottomBarState extends State<GlassBottomBar>
     return Stack(
       fit: StackFit.expand,
       children: <Widget>[
+        // 边缘折射：只画圆角边缘那一圈，内部透明让下层模糊透出。
+        // 放在最底下是因为它属于"玻璃本体"，高光和药丸都该压在它上面。
+        if (widget.refraction && widget.backdropKey != null)
+          LiquidLensLayer(
+            backdropKey: widget.backdropKey!,
+            borderRadius: widget.borderRadius,
+            // 折射越强越"厚"，但也越容易糊掉图标，这里跟边框宽度量级对齐
+            refractionHeight: 20,
+            refractionAmount: 18,
+            depthEffect: 0.35,
+            chromaticAberration: 0.4,
+            opacity: 0.9,
+          ),
+
         // 跟随光斑：滑动时更亮，停下后回落
         DecoratedBox(
           decoration: BoxDecoration(

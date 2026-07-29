@@ -208,6 +208,10 @@ class HomePageState extends ConsumerState<HomePage> {
   bool showMask = false;
 
   GlobalKey<StatsPageState> statsKey = GlobalKey();
+
+  /// 折射层的背景采样源。只包 body，不能包整个 Scaffold ——
+  /// 底栏在 Scaffold 里面，采样源含底栏就会自己采自己，画面拖影。
+  final GlobalKey _backdropKey = GlobalKey();
   GlobalKey<TaskPageState> taskKey = GlobalKey();
   GlobalKey<EnvPageState> envKey = GlobalKey();
   GlobalKey<OtherPageState> meKey = GlobalKey();
@@ -227,7 +231,9 @@ class HomePageState extends ConsumerState<HomePage> {
               child: Scaffold(
                 backgroundColor: CustomBg.pageBg(null),
                 extendBody: true,
-                body: IndexedStack(
+                body: RepaintBoundary(
+                  key: _backdropKey,
+                  child: IndexedStack(
                   index: ref.watch<int>(SingleAccountPageState.ofHomeIndexProvider(context)(
                       getProviderName(context))),
                   children: [
@@ -256,10 +262,12 @@ class HomePageState extends ConsumerState<HomePage> {
                       ),
                     ),
                   ],
+                  ),
                 ),
                 bottomNavigationBar: GlassBottomBar(
                   height: kBottomNavigationBarHeight,
                   itemCount: titles.length,
+                  backdropKey: _backdropKey,
                   currentIndex: ref.watch<int>(
                       SingleAccountPageState.ofHomeIndexProvider(context)(
                           getProviderName(context))),
