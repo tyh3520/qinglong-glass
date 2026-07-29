@@ -25,11 +25,13 @@ class GlassBottomBar extends StatefulWidget {
     required this.height,
     required this.currentIndex,
     required this.itemCount,
-    this.blurSigma = 22,
+    this.blurSigma = 18,
+    this.glassOpacity = 1.0,
     this.margin,
     this.borderRadius = 28,
     this.pillColor,
   })  : assert(itemCount > 0),
+        assert(glassOpacity >= 0),
         super(key: key);
 
   final Widget child;
@@ -45,6 +47,15 @@ class GlassBottomBar extends StatefulWidget {
 
   /// 背景模糊强度。0 表示完全不模糊（纯透明玻璃）。
   final double blurSigma;
+
+  /// 玻璃「奶感」总控：等比缩放所有白色叠加层的不透明度。
+  ///
+  /// - `1.0` 默认
+  /// - `0.5` 更透，背景看得更清
+  /// - `0` 只剩模糊和边框，填充全透
+  ///
+  /// 不影响 [blurSigma]（模糊）和阴影，只影响白色蒙层的浓度。
+  final double glassOpacity;
 
   final EdgeInsetsGeometry? margin;
 
@@ -135,33 +146,27 @@ class _GlassBottomBarState extends State<GlassBottomBar>
   Widget build(BuildContext context) {
     final bool isDark = Theme.of(context).brightness == Brightness.dark;
 
-    // 玻璃本体：上亮下暗，模拟光从上方来
-    final Color fillTop = isDark
-        ? Colors.white.withOpacity(0.14)
-        : Colors.white.withOpacity(0.32);
-    final Color fillBottom = isDark
-        ? Colors.white.withOpacity(0.06)
-        : Colors.white.withOpacity(0.16);
-    final Color border = isDark
-        ? Colors.white.withOpacity(0.24)
-        : Colors.white.withOpacity(0.55);
-    final Color rimHighlight = isDark
-        ? Colors.white.withOpacity(0.34)
-        : Colors.white.withOpacity(0.85);
+    /// 按 [GlassBottomBar.glassOpacity] 缩放白色蒙层浓度。
+    Color tint(double alpha) =>
+        Colors.white.withOpacity((alpha * widget.glassOpacity).clamp(0.0, 1.0));
+
+    // 玻璃本体：上亮下暗，模拟光从上方来。
+    // 这里的填充刻意压得很低 —— 白色蒙层是「奶感」的唯一来源，
+    // 通透感靠模糊 + 边框 + 高光撑，不靠填充。
+    final Color fillTop = isDark ? tint(0.05) : tint(0.12);
+    final Color fillBottom = isDark ? tint(0.02) : tint(0.05);
+    // 边框和高光保持相对清晰：玻璃「有形状」靠的是边缘，
+    // 边缘一起变淡的话整条会散掉，看起来像没渲染出来。
+    final Color border = isDark ? tint(0.20) : tint(0.42);
+    final Color rimHighlight = isDark ? tint(0.30) : tint(0.70);
     final Color shadow = isDark
         ? Colors.black.withOpacity(0.28)
         : Colors.black.withOpacity(0.12);
 
-    final Color pillFill = widget.pillColor ??
-        (isDark
-            ? Colors.white.withOpacity(0.16)
-            : Colors.white.withOpacity(0.42));
-    final Color pillBorder = isDark
-        ? Colors.white.withOpacity(0.30)
-        : Colors.white.withOpacity(0.70);
-    final Color glow = isDark
-        ? Colors.white.withOpacity(0.10)
-        : Colors.white.withOpacity(0.22);
+    final Color pillFill =
+        widget.pillColor ?? (isDark ? tint(0.10) : tint(0.20));
+    final Color pillBorder = isDark ? tint(0.26) : tint(0.55);
+    final Color glow = isDark ? tint(0.07) : tint(0.14);
 
     return SafeArea(
       top: false,
