@@ -1,3 +1,4 @@
+import 'dart:math' as math;
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
@@ -160,15 +161,19 @@ class _GlassBottomBarState extends State<GlassBottomBar>
     Color tint(double alpha) =>
         Colors.white.withOpacity((alpha * widget.glassOpacity).clamp(0.0, 1.0));
 
+    /// 边缘专用：用平方根衰减，降透明度时边缘比填充掉得慢。
+    ///
+    /// 玻璃「有形状」全靠边缘。填充和边缘同比例变淡的话，整条会散成一片雾，
+    /// 看起来像没渲染出来 —— 反而更不像玻璃。
+    Color edgeTint(double alpha) => Colors.white.withOpacity(
+        (alpha * math.sqrt(widget.glassOpacity)).clamp(0.0, 1.0));
+
     // 玻璃本体：上亮下暗，模拟光从上方来。
-    // 这里的填充刻意压得很低 —— 白色蒙层是「奶感」的唯一来源，
-    // 通透感靠模糊 + 边框 + 高光撑，不靠填充。
+    // 填充刻意压到接近零 —— 通透感靠模糊 + 边框 + 高光撑，不靠填充。
     final Color fillTop = isDark ? tint(0.05) : tint(0.12);
     final Color fillBottom = isDark ? tint(0.02) : tint(0.05);
-    // 边框和高光保持相对清晰：玻璃「有形状」靠的是边缘，
-    // 边缘一起变淡的话整条会散掉，看起来像没渲染出来。
-    final Color border = isDark ? tint(0.20) : tint(0.42);
-    final Color rimHighlight = isDark ? tint(0.30) : tint(0.70);
+    final Color border = isDark ? edgeTint(0.20) : edgeTint(0.42);
+    final Color rimHighlight = isDark ? edgeTint(0.30) : edgeTint(0.70);
     final Color shadow = isDark
         ? Colors.black.withOpacity(0.28)
         : Colors.black.withOpacity(0.12);
