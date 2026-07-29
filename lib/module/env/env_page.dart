@@ -10,11 +10,11 @@ import 'package:qinglong_app/base/routes.dart';
 import 'package:qinglong_app/base/single_account_page.dart';
 import 'package:qinglong_app/base/theme.dart';
 import 'package:qinglong_app/base/ui/custom_bg.dart';
+import 'package:qinglong_app/base/ui/glass_edit_bar.dart';
 import 'package:qinglong_app/base/ui/search_cell.dart';
 import 'package:qinglong_app/module/env/add_env_page.dart';
 import 'package:qinglong_app/module/env/env_bean.dart';
 import 'package:qinglong_app/module/env/env_viewmodel.dart';
-import 'package:qinglong_app/module/task/task_page.dart';
 import 'package:qinglong_app/utils/extension.dart';
 import 'package:qinglong_app/utils/utils.dart';
 
@@ -336,20 +336,8 @@ class EnvPageState extends ConsumerState<EnvPage> with TickerProviderStateMixin 
     removeOverlay();
     _editModeOverlay = OverlayEntry(
       builder: (BuildContext context) {
-        return Align(
-          alignment: Alignment.bottomCenter,
-          child: Container(
-            width: MediaQuery.of(context).size.width,
-            color: ref.watch(themeProvider).currentTheme.bottomNavigationBarTheme.backgroundColor?.withOpacity(1),
-            child: SafeArea(
-              top: false,
-              child: SizedBox(
-                height: kBottomNavigationBarHeight,
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
+        return GlassEditBar(
+          buttons: [
                     EditModeButton(
                       "启用",
                       icon: Icons.check_circle_outline_sharp,
@@ -372,11 +360,7 @@ class EnvPageState extends ConsumerState<EnvPage> with TickerProviderStateMixin 
                         _executeCode(context, "删除");
                       },
                     ),
-                  ],
-                ),
-              ),
-            ),
-          ),
+          ],
         );
       },
     );
