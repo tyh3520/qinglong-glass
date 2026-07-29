@@ -259,6 +259,10 @@ class HomePageState extends ConsumerState<HomePage> {
                 ),
                 bottomNavigationBar: GlassBottomBar(
                   height: kBottomNavigationBarHeight,
+                  itemCount: titles.length,
+                  currentIndex: ref.watch<int>(
+                      SingleAccountPageState.ofHomeIndexProvider(context)(
+                          getProviderName(context))),
                   child: BottomNavigationBar2(
                     backgroundColor: Colors.transparent,
                     items: titles
