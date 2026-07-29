@@ -26,7 +26,3 @@ String spTextScaleFactor = "spTextScaleFactor"; //字体缩放大小
 String spLogAutoJump2Bottom = "spLogAutoJump2Bottom"; //任务日志自动滚动到底部
 String spAndroidKeyboardError = "spAndroidKeyboardError"; //android 键盘的bug
 String spSingleInstance = "spSingleInstance"; //启用单实体模式
-String spCustomBgEnabled = "spCustomBgEnabled"; // 自定义背景图开关
-String spCustomBgPath = "spCustomBgPath"; // 本地背景图路径
-String spCustomBgDim = "spCustomBgDim"; // 背景遮罩强度 0.0~0.85
-String spCustomBgBlur = "spCustomBgBlur"; // 背景图模糊半径 0~25

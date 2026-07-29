@@ -7,7 +7,6 @@ import 'package:qinglong_app/base/http/http.dart';
 import 'package:qinglong_app/base/ql_app_bar.dart';
 import 'package:qinglong_app/base/single_account_page.dart';
 import 'package:qinglong_app/base/theme.dart';
-import 'package:qinglong_app/base/ui/custom_bg.dart';
 import 'package:qinglong_app/base/ui/loading_widget.dart';
 import 'package:qinglong_app/main.dart';
 import 'package:qinglong_app/module/home/system_bean.dart';
@@ -248,7 +247,7 @@ class StatsPageState extends ConsumerState<StatsPage> {
   Widget build(BuildContext context) {
     final theme = ref.watch(themeProvider);
     return Scaffold(
-      backgroundColor: CustomBg.pageBg(theme.themeColor.bg2Color()),
+      backgroundColor: theme.themeColor.bg2Color(),
       appBar: QlAppBar(
         title: '仪表盘',
         canBack: false,
@@ -416,9 +415,7 @@ class StatsPageState extends ConsumerState<StatsPage> {
               child: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
                 decoration: BoxDecoration(
-                  color: theme.themeColor
-                      .settingBgColor()
-                      .withOpacity(CustomBg.cardOpacity),
+                  color: theme.themeColor.settingBgColor(),
                   borderRadius: BorderRadius.circular(10),
                   border: Border.all(color: theme.themeColor.settingBordorColor()),
                 ),
@@ -660,7 +657,7 @@ class StatsPageState extends ConsumerState<StatsPage> {
       width: double.infinity,
       padding: const EdgeInsets.fromLTRB(12, 12, 12, 12),
       decoration: BoxDecoration(
-        color: theme.themeColor.settingBgColor().withOpacity(CustomBg.cardOpacity),
+        color: theme.themeColor.settingBgColor(),
         borderRadius: BorderRadius.circular(12),
         border: Border.all(color: theme.themeColor.settingBordorColor()),
       ),

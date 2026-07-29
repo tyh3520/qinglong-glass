@@ -86,11 +86,6 @@ class ThemeViewModel extends ChangeNotifier {
 
   get themeMode => _themeMode;
 
-  /// 供设置页等外部触发重建（如自定义背景图变更）
-  void refreshUi() {
-    notifyListeners();
-  }
-
   ThemeData getWhiteTheme() {
     return ThemeData.light().copyWith(
       pageTransitionsTheme: const PageTransitionsTheme(

@@ -11,7 +11,6 @@ import 'package:qinglong_app/base/routes.dart';
 import 'package:qinglong_app/base/single_account_page.dart';
 import 'package:qinglong_app/base/sp_const.dart';
 import 'package:qinglong_app/base/theme.dart';
-import 'package:qinglong_app/base/ui/custom_bg.dart';
 import 'package:qinglong_app/base/ui/lazy_load_state.dart';
 import 'package:qinglong_app/module/in_app_purchase_page.dart';
 import 'package:qinglong_app/module/others/change_account_page.dart';
@@ -75,9 +74,7 @@ class OtherPageState extends ConsumerState<OtherPage>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: CustomBg.pageBg(
-        ref.watch(themeProvider).themeColor.bg2Color(),
-      ),
+      backgroundColor: ref.watch(themeProvider).themeColor.bg2Color(),
       body: RefreshIndicator(
         key: refreshKey,
         onRefresh: () async {

@@ -9,7 +9,6 @@ import 'package:qinglong_app/base/ql_app_bar.dart';
 import 'package:qinglong_app/base/routes.dart';
 import 'package:qinglong_app/base/single_account_page.dart';
 import 'package:qinglong_app/base/theme.dart';
-import 'package:qinglong_app/base/ui/custom_bg.dart';
 import 'package:qinglong_app/base/ui/glass_edit_bar.dart';
 import 'package:qinglong_app/base/ui/search_cell.dart';
 import 'package:qinglong_app/module/env/add_env_page.dart';
@@ -103,7 +102,6 @@ class EnvPageState extends ConsumerState<EnvPage> with TickerProviderStateMixin 
         FocusScope.of(context).requestFocus(FocusNode());
       },
       child: Scaffold(
-        backgroundColor: CustomBg.pageBg(null),
         appBar: QlAppBar(
           title: (editMode && checkedIds.isNotEmpty) ? "当前选中 ${checkedIds.length} 个变量" : "环境变量",
           canClick2Vip: !editMode,

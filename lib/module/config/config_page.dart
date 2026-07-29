@@ -7,7 +7,6 @@ import 'package:qinglong_app/base/ql_app_bar.dart';
 import 'package:qinglong_app/base/routes.dart';
 import 'package:qinglong_app/base/single_account_page.dart';
 import 'package:qinglong_app/base/theme.dart';
-import 'package:qinglong_app/base/ui/custom_bg.dart';
 import 'package:qinglong_app/base/ui/empty_widget.dart';
 import 'package:qinglong_app/main.dart';
 import 'package:qinglong_app/module/config/add_config_page.dart';
@@ -70,7 +69,6 @@ class ConfigPageState extends ConsumerState<ConfigPage> with SingleTickerProvide
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: CustomBg.pageBg(null),
       appBar: QlAppBar(
         canBack: false,
         title: "配置文件",
