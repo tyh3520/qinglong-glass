@@ -416,9 +416,9 @@ class StatsPageState extends ConsumerState<StatsPage> {
               child: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
                 decoration: BoxDecoration(
-                  color: theme.themeColor.settingBgColor().withOpacity(
-                        CustomBg.hasImage ? 0.88 : 1,
-                      ),
+                  color: theme.themeColor
+                      .settingBgColor()
+                      .withOpacity(CustomBg.cardOpacity),
                   borderRadius: BorderRadius.circular(10),
                   border: Border.all(color: theme.themeColor.settingBordorColor()),
                 ),
@@ -660,7 +660,7 @@ class StatsPageState extends ConsumerState<StatsPage> {
       width: double.infinity,
       padding: const EdgeInsets.fromLTRB(12, 12, 12, 12),
       decoration: BoxDecoration(
-        color: theme.themeColor.settingBgColor().withOpacity(CustomBg.hasImage ? 0.88 : 1),
+        color: theme.themeColor.settingBgColor().withOpacity(CustomBg.cardOpacity),
         borderRadius: BorderRadius.circular(12),
         border: Border.all(color: theme.themeColor.settingBordorColor()),
       ),

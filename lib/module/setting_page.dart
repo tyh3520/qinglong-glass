@@ -732,6 +732,72 @@ class _SettingPageState extends ConsumerState<SettingPage> {
                       indent: 55,
                       height: 1,
                     ),
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(15, 8, 15, 4),
+                      child: Row(
+                        children: [
+                          Icon(
+                            CupertinoIcons.drop,
+                            color: ref.watch(themeProvider).primaryColor,
+                            size: 20,
+                          ),
+                          const SizedBox(width: 15),
+                          Text(
+                            "背景模糊",
+                            style: TextStyle(
+                              color: ref
+                                  .watch(themeProvider)
+                                  .themeColor
+                                  .titleColor(),
+                              fontSize: 16,
+                            ),
+                          ),
+                          const Spacer(),
+                          Text(
+                            CustomBg.blur <= 0
+                                ? "关"
+                                : "${(CustomBg.blur / 25 * 100).round()}%",
+                            style: TextStyle(
+                              color: ref
+                                  .watch(themeProvider)
+                                  .themeColor
+                                  .descColor(),
+                              fontSize: 12,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(50, 0, 10, 8),
+                      child: SliderTheme(
+                        data: SliderTheme.of(context).copyWith(
+                          trackHeight: 3,
+                          thumbShape: const RoundSliderThumbShape(
+                            enabledThumbRadius: 7,
+                          ),
+                          overlayShape: const RoundSliderOverlayShape(
+                            overlayRadius: 14,
+                          ),
+                        ),
+                        child: Slider(
+                          min: 0,
+                          max: 25,
+                          divisions: 25,
+                          activeColor: ref.watch(themeProvider).primaryColor,
+                          value: CustomBg.blur.clamp(0.0, 25.0),
+                          onChanged: (v) async {
+                            await CustomBg.setBlur(v);
+                            ref.read(themeProvider).refreshUi();
+                            setState(() {});
+                          },
+                        ),
+                      ),
+                    ),
+                    const Divider(
+                      indent: 55,
+                      height: 1,
+                    ),
                     GestureDetector(
                       behavior: HitTestBehavior.opaque,
                       onTap: () async {

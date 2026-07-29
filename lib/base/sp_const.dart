@@ -29,3 +29,4 @@ String spSingleInstance = "spSingleInstance"; //启用单实体模式
 String spCustomBgEnabled = "spCustomBgEnabled"; // 自定义背景图开关
 String spCustomBgPath = "spCustomBgPath"; // 本地背景图路径
 String spCustomBgDim = "spCustomBgDim"; // 背景遮罩强度 0.0~0.85
+String spCustomBgBlur = "spCustomBgBlur"; // 背景图模糊半径 0~25
