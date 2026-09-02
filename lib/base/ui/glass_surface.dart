@@ -78,11 +78,22 @@ class GlassSurface extends StatelessWidget {
           ? Stack(
               children: <Widget>[
                 child,
-                Align(
-                  alignment: Alignment.topCenter,
-                  child: Container(
-                    height: 1.2,
-                    margin: const EdgeInsets.symmetric(horizontal: 22),
+                // 必须是 Positioned，不能是 Align。
+                //
+                // Stack 默认 fit: StackFit.loose，非定位子节点拿到松约束；
+                // Align 在 widthFactor/heightFactor 都为 null 且约束有界时会撑到
+                // constraints.biggest，于是 Stack 的尺寸变成整个可用区域 ——
+                // 编辑栏那条 56 高的玻璃条就糊满全屏，按钮还被 Stack 默认的
+                // topStart 甩到左上角。GlassBottomBar 里同样的写法没炸，
+                // 只因为它外面套了 Container(height:) 把高度钉死了。
+                //
+                // 定位子节点不参与 Stack 尺寸计算，高度重新由 child 决定。
+                Positioned(
+                  top: 0,
+                  left: 22,
+                  right: 22,
+                  height: 1.2,
+                  child: DecoratedBox(
                     decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(1),
                       gradient: LinearGradient(
