@@ -152,6 +152,10 @@ jobs:
     needs: [android, ios]
     if: startsWith(github.ref, 'refs/tags/')
     runs-on: ubuntu-latest
+    # this repo's default workflow permission is read-only, so GITHUB_TOKEN
+    # gets 403 "Resource not accessible by integration" on release create.
+    permissions:
+      contents: write
     steps:
       # one release step for both platforms: two jobs each calling
       # action-gh-release on the same tag race each other on create.
