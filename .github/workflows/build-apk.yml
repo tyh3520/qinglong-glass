@@ -77,10 +77,71 @@ jobs:
           path: build/app/outputs/flutter-apk/*.apk
           if-no-files-found: error
 
-      - name: create release on tag
-        if: startsWith(github.ref, 'refs/tags/')
+  ios:
+    runs-on: macos-13
+    timeout-minutes: 60
+    steps:
+      - name: checkout
+        uses: actions/checkout@v4
+
+      - name: setup xcode
+        uses: maxim-lobanov/setup-xcode@v1
+        with:
+          # flutter 3.7 predates xcode 15; xcode 15+ needs -ld_classic hacks
+          # to link the Flutter framework. 14.3.1 is the contemporary pairing.
+          xcode-version: "14.3.1"
+
+      - name: setup flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: "3.7.12"
+          channel: stable
+          cache: true
+
+      - name: pub get
+        run: flutter pub get
+
+      # no apple developer cert in ci -> build unsigned.
+      # the resulting ipa needs sideloading (sideloadly / altstore / trollstore),
+      # it will not install by itself on a stock device.
+      - name: build ios (unsigned)
+        run: flutter build ios --release --no-codesign
+
+      - name: package unsigned ipa
+        run: |
+          set -e
+          cd build/ios
+          rm -rf Payload
+          mkdir Payload
+          cp -R iphoneos/Runner.app Payload/
+          # -y keeps framework symlinks as symlinks; -x drops finder junk
+          zip -qry qinglong-glass-unsigned.ipa Payload -x '*.DS_Store'
+          ls -la qinglong-glass-unsigned.ipa
+
+      - name: upload ipa
+        uses: actions/upload-artifact@v4
+        with:
+          name: qinglong-glass-ipa
+          path: build/ios/qinglong-glass-unsigned.ipa
+          if-no-files-found: error
+
+  release:
+    needs: [android, ios]
+    if: startsWith(github.ref, 'refs/tags/')
+    runs-on: ubuntu-latest
+    steps:
+      # one release step for both platforms: two jobs each calling
+      # action-gh-release on the same tag race each other on create.
+      - name: download artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: dist
+
+      - name: create release
         uses: softprops/action-gh-release@v2
         with:
-          files: build/app/outputs/flutter-apk/*.apk
+          files: |
+            dist/qinglong-glass-apk/*.apk
+            dist/qinglong-glass-ipa/*.ipa
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
