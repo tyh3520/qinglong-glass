@@ -11,7 +11,8 @@ import 'package:qinglong_app/base/routes.dart';
 import 'package:qinglong_app/base/single_account_page.dart';
 import 'package:qinglong_app/base/sp_const.dart';
 import 'package:qinglong_app/base/theme.dart';
-import 'package:qinglong_app/base/ui/custom_bg.dart';
+import 'package:qinglong_app/base/ui/glass_segmented_header.dart';
+import 'package:qinglong_app/base/ui/glass_edit_bar.dart';
 import 'package:qinglong_app/base/ui/loading_widget.dart';
 import 'package:qinglong_app/base/ui/search_cell.dart';
 import 'package:qinglong_app/module/task/add_task_page.dart';
@@ -26,6 +27,7 @@ import '../../base/ui/enable_widget.dart';
 import '../../base/ui/notify.dart';
 import '../../base/ui/running_widget.dart';
 import '../../main.dart';
+import 'package:qinglong_app/base/ui/custom_bg.dart';
 
 class TaskPage extends ConsumerStatefulWidget {
   final bool loading;
@@ -527,29 +529,9 @@ class TaskPageState extends ConsumerState<TaskPage>
     removeOverlay();
     _editModeOverlay = OverlayEntry(
       builder: (BuildContext context) {
-        return Align(
-          alignment: Alignment.bottomCenter,
-          child: Container(
-            width: MediaQuery.of(context).size.width,
-            color: ref
-                .watch(themeProvider)
-                .currentTheme
-                .bottomNavigationBarTheme
-                .backgroundColor
-                ?.withOpacity(1),
-            child: SafeArea(
-              top: false,
-              child: SizedBox(
-                height: kBottomNavigationBarHeight,
-                child: SingleChildScrollView(
-                  primary: true,
-                  scrollDirection: Axis.horizontal,
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: [
-                      const SizedBox(
-                        width: 15,
-                      ),
+        return GlassEditBar(
+          scrollable: true,
+          buttons: [
                       EditModeButton(
                         "运行",
                         icon: CupertinoIcons.memories,
@@ -600,12 +582,7 @@ class TaskPageState extends ConsumerState<TaskPage>
                           _executeCode(context, "删除");
                         },
                       ),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-          ),
+          ],
         );
       },
     );
@@ -1296,8 +1273,7 @@ class SliverTabBarDelegate extends SliverPersistentHeaderDelegate {
       height: 55,
       child: IgnorePointer(
         ignoring: editMode,
-        child: ColoredBox(
-          color: ref.watch(themeProvider).currentTheme.scaffoldBackgroundColor,
+        child: GlassSegmentedBar(
           child: Padding(
             padding: const EdgeInsets.only(
               left: 15,
@@ -1343,14 +1319,8 @@ class SliverTabBarDelegate extends SliverPersistentHeaderDelegate {
                   ),
                 ),
               },
-              decoration: BoxDecoration(
-                color: ref.watch(themeProvider).themeColor.segmentedUnCheckBg(),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              thumbDecoration: BoxDecoration(
-                color: ref.watch(themeProvider).themeColor.blackAndWhite(),
-                borderRadius: BorderRadius.circular(6),
-              ),
+              decoration: glassSegmentedTrack(context),
+              thumbDecoration: glassSegmentedThumb(context, ref),
               duration: const Duration(milliseconds: 300),
               curve: Curves.easeInToLinear,
               onValueChanged: (v) {
@@ -1375,53 +1345,3 @@ class SliverTabBarDelegate extends SliverPersistentHeaderDelegate {
   double get minExtent => 55;
 }
 
-class EditModeButton extends ConsumerWidget {
-  final String title;
-  final GestureTapCallback onTap;
-  final IconData icon;
-
-  const EditModeButton(
-    this.title, {
-    Key? key,
-    required this.icon,
-    required this.onTap,
-  }) : super(key: key);
-
-  @override
-  Widget build(BuildContext context, ref) {
-    final BottomNavigationBarThemeData bottomTheme = BottomNavigationBarTheme.of(context);
-
-    return Container(
-      alignment: Alignment.center,
-      margin: const EdgeInsets.only(
-        right: 15,
-      ),
-      child: CupertinoButton(
-        padding: const EdgeInsets.symmetric(
-          horizontal: 10,
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(
-              icon,
-              size: 18,
-              color: bottomTheme.unselectedLabelStyle?.color ?? Colors.grey,
-            ),
-            const SizedBox(
-              height: 3,
-            ),
-            Text(
-              title,
-              style: TextStyle(
-                fontSize: 14,
-                color: bottomTheme.unselectedLabelStyle?.color ?? Colors.grey,
-              ),
-            ),
-          ],
-        ),
-        onPressed: onTap,
-      ),
-    );
-  }
-}
