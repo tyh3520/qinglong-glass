@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'dart:math';
 import 'package:path/path.dart' as ints;
+import 'package:path_provider/path_provider.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -252,10 +253,12 @@ class UploadScriptWidgetState extends ConsumerState<UploadScriptWidget>
   }
 
   void pickLocalFile() async {
-    // file_picker 5.x 缓存坑：Android 选文件先拷进 app 缓存目录，同名不覆盖直接返回旧副本。
-    // 解法：pick 之前清空 file_picker 缓存目录，强制本次拷贝真实文件。
+    // file_picker 5.x 缓存坑：Android 选文件先拷进 app cache/file_picker/，同名不覆盖直接返回旧副本。
+    // 解法：pick 之前清空该目录，强制本次拷贝真实文件。必须用 path_provider 的
+    // getTemporaryDirectory()（= Android context.getCacheDir()），Directory.systemTemp 不保证同路。
     try {
-      final cacheDir = Directory("${Directory.systemTemp.path}/file_picker/");
+      final tmp = await getTemporaryDirectory();
+      final cacheDir = Directory("${tmp.path}/file_picker/");
       if (cacheDir.existsSync()) cacheDir.deleteSync(recursive: true);
     } catch (_) {}
     FilePickerResult? result = await FilePicker.platform.pickFiles(withData: true);

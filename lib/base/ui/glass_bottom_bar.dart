@@ -27,11 +27,11 @@ class GlassBottomBar extends StatelessWidget {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     // 纯透明：几乎不填充，只靠边框和高光显形
     final fillTop = isDark
-        ? Colors.white.withOpacity(0.04)
-        : Colors.white.withOpacity(0.10);
+        ? Colors.white.withOpacity(0.10)
+        : Colors.white.withOpacity(0.22);
     final fillBottom = isDark
-        ? Colors.white.withOpacity(0.02)
-        : Colors.white.withOpacity(0.06);
+        ? Colors.white.withOpacity(0.05)
+        : Colors.white.withOpacity(0.14);
     final border = isDark
         ? Colors.white.withOpacity(0.50)
         : Colors.white.withOpacity(0.90);
