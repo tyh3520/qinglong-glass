@@ -252,6 +252,12 @@ class UploadScriptWidgetState extends ConsumerState<UploadScriptWidget>
   }
 
   void pickLocalFile() async {
+    // file_picker 5.x 缓存坑：Android 选文件先拷进 app 缓存目录，同名不覆盖直接返回旧副本。
+    // 解法：pick 之前清空 file_picker 缓存目录，强制本次拷贝真实文件。
+    try {
+      final cacheDir = Directory("${Directory.systemTemp.path}/file_picker/");
+      if (cacheDir.existsSync()) cacheDir.deleteSync(recursive: true);
+    } catch (_) {}
     FilePickerResult? result = await FilePicker.platform.pickFiles(withData: true);
     if (result != null && result.files.isNotEmpty && result.files.single.path != null) {
       file = File(result.files.single.path!);

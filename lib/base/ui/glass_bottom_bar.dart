@@ -15,8 +15,8 @@ class GlassBottomBar extends StatelessWidget {
     Key? key,
     required this.child,
     required this.height,
-    // 关闭模糊：完全不糊
-    this.blurSigma = 0,
+    // 液态玻璃模糊
+    this.blurSigma = 18,
     this.margin,
     this.borderRadius = 28,
     this.rippleColor,
