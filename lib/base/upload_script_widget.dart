@@ -252,12 +252,16 @@ class UploadScriptWidgetState extends ConsumerState<UploadScriptWidget>
   }
 
   void pickLocalFile() async {
-    FilePickerResult? result = await FilePicker.platform.pickFiles();
+    FilePickerResult? result = await FilePicker.platform.pickFiles(withData: true);
     if (result != null && result.files.isNotEmpty && result.files.single.path != null) {
       file = File(result.files.single.path!);
       fileName = null;
 
       if (file == null) return;
+      // file_picker 5.x 缓存坑：同名文件二次选择返回旧缓存路径，不回写会传旧版本
+      if (result.files.single.bytes != null) {
+        file!.writeAsBytesSync(result.files.single.bytes!);
+      }
       if (file!.lengthSync() > 5242880) {
         file = null;
         "最大支持上传5M的文件".toast();
