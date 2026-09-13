@@ -11,7 +11,6 @@ import 'package:qinglong_app/base/single_account_page.dart';
 import 'package:qinglong_app/base/sp_const.dart';
 import 'package:qinglong_app/base/theme.dart';
 import 'package:qinglong_app/base/ui/bottom_nav_bar.dart';
-import 'package:qinglong_app/base/ui/custom_bg.dart';
 import 'package:qinglong_app/base/ui/glass_bottom_bar.dart';
 import 'package:qinglong_app/main.dart';
 import 'package:qinglong_app/module/config/config_page.dart';
@@ -24,6 +23,7 @@ import 'package:move_to_background/move_to_background.dart';
 import 'package:qinglong_app/utils/extension.dart';
 import 'package:qinglong_app/utils/login_helper.dart';
 import 'package:qinglong_app/utils/sp_utils.dart';
+import 'package:qinglong_app/base/ui/custom_bg.dart';
 import 'package:qinglong_app/utils/utils.dart';
 
 import '../../base/multi_account_userinfo_viewmodel.dart';
@@ -208,6 +208,10 @@ class HomePageState extends ConsumerState<HomePage> {
   bool showMask = false;
 
   GlobalKey<StatsPageState> statsKey = GlobalKey();
+
+  /// 折射层的背景采样源。只包 body，不能包整个 Scaffold ——
+  /// 底栏在 Scaffold 里面，采样源含底栏就会自己采自己，画面拖影。
+  final GlobalKey _backdropKey = GlobalKey();
   GlobalKey<TaskPageState> taskKey = GlobalKey();
   GlobalKey<EnvPageState> envKey = GlobalKey();
   GlobalKey<OtherPageState> meKey = GlobalKey();
@@ -225,9 +229,11 @@ class HomePageState extends ConsumerState<HomePage> {
           children: [
             RepaintBoundary(
               child: Scaffold(
-                backgroundColor: CustomBg.pageBg(null),
                 extendBody: true,
-                body: IndexedStack(
+                backgroundColor: CustomBg.pageBg(null),
+                body: RepaintBoundary(
+                  key: _backdropKey,
+                  child: IndexedStack(
                   index: ref.watch<int>(SingleAccountPageState.ofHomeIndexProvider(context)(
                       getProviderName(context))),
                   children: [
@@ -256,9 +262,15 @@ class HomePageState extends ConsumerState<HomePage> {
                       ),
                     ),
                   ],
+                  ),
                 ),
                 bottomNavigationBar: GlassBottomBar(
                   height: kBottomNavigationBarHeight,
+                  itemCount: titles.length,
+                  backdropKey: _backdropKey,
+                  currentIndex: ref.watch<int>(
+                      SingleAccountPageState.ofHomeIndexProvider(context)(
+                          getProviderName(context))),
                   child: BottomNavigationBar2(
                     backgroundColor: Colors.transparent,
                     items: titles

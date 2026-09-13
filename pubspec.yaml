@@ -86,6 +86,9 @@ flutter:
     - assets/scan.json
     - assets/images/
     - assets/codemirror.html
+
+  shaders:
+    - shaders/liquid_glass_lens.frag
 flutter_app_name:
   name: "青龙客户端"
 
