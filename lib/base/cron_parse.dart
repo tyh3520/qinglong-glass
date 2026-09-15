@@ -136,6 +136,33 @@ List<int>? parseConstraint(dynamic constraint) {
   throw 'Unable to parse: $constraint';
 }
 
+/// 校验单条定时规则是否合法，规则与青龙服务端保持一致：
+/// 5 段（分 时 天 月 周）或 6 段（秒 分 时 天 月 周），
+/// 且不接受 Quartz 的 `?` 与裸 `/N` 写法（node-schedule 会注册失败）。
+///
+/// 返回 null 表示通过，否则返回错误原因。
+String? validateCronRule(String rule) {
+  final String value = rule.trim();
+  if (value.isEmpty) {
+    return "定时规则不能为空";
+  }
+  // @once / @boot 等特殊规则交给服务端判断
+  if (value.startsWith("@")) {
+    return null;
+  }
+  if (value.contains("?")) {
+    return "不支持 ? 写法，请用 *";
+  }
+  if (RegExp(r"(^|\s)/\d").hasMatch(value)) {
+    return "不支持 /N 写法，请用 */N";
+  }
+  final int parts = value.split(RegExp(r"\s+")).length;
+  if (parts != 5 && parts != 6) {
+    return "需要 5 段或 6 段（秒可选），当前 $parts 段";
+  }
+  return null;
+}
+
 class _CronIterator implements CronIterator<TZDateTime> {
   _Schedule _schedule;
   TZDateTime _currentDate;

@@ -186,8 +186,7 @@ class TaskPageState extends ConsumerState<TaskPage>
                                     ?.toLowerCase()
                                     .contains(searchText.text.toLowerCase()) ??
                                     false) ||
-                                (item.schedule?.contains(searchText.text.toLowerCase()) ??
-                                    false)) {
+                                item.scheduleText.contains(searchText.text.toLowerCase())) {
                               return true;
                             }
                             return false;
@@ -305,7 +304,7 @@ class TaskPageState extends ConsumerState<TaskPage>
                                 false) ||
                             (item.command?.toLowerCase().contains(searchText.text.toLowerCase()) ??
                                 false) ||
-                            (item.schedule?.contains(searchText.text.toLowerCase()) ?? false)) {
+                            item.scheduleText.contains(searchText.text.toLowerCase())) {
                           return true;
                         }
                         return false;
@@ -325,7 +324,7 @@ class TaskPageState extends ConsumerState<TaskPage>
                                       ?.toLowerCase()
                                       .contains(searchText.text.toLowerCase()) ??
                                   false) ||
-                              (item.schedule?.contains(searchText.text.toLowerCase()) ?? false)) {
+                              item.scheduleText.contains(searchText.text.toLowerCase())) {
                             return true;
                           }
                           return false;
@@ -373,8 +372,7 @@ class TaskPageState extends ConsumerState<TaskPage>
                                                 ?.toLowerCase()
                                                 .contains(searchText.text.toLowerCase()) ??
                                             false) ||
-                                        (item.schedule?.contains(searchText.text.toLowerCase()) ??
-                                            false)) {
+                                        item.scheduleText.contains(searchText.text.toLowerCase())) {
                                       return true;
                                     }
                                     return false;
@@ -862,7 +860,7 @@ class _ListBodyState extends ConsumerState<ListBodyWidget> with AutomaticKeepAli
         if (widget.searchText.isEmpty ||
             (item.name?.toLowerCase().contains(widget.searchText.toLowerCase()) ?? false) ||
             (item.command?.toLowerCase().contains(widget.searchText.toLowerCase()) ?? false) ||
-            (item.schedule?.contains(widget.searchText.toLowerCase()) ?? false)) {
+            item.scheduleText.contains(widget.searchText.toLowerCase())) {
           return TaskItemCell(
             item,
             ref,
@@ -882,7 +880,7 @@ class _ListBodyState extends ConsumerState<ListBodyWidget> with AutomaticKeepAli
         if (widget.searchText.isEmpty ||
             (item.name?.toLowerCase().contains(widget.searchText.toLowerCase()) ?? false) ||
             (item.command?.toLowerCase().contains(widget.searchText.toLowerCase()) ?? false) ||
-            (item.schedule?.contains(widget.searchText.toLowerCase()) ?? false)) {
+            item.scheduleText.contains(widget.searchText.toLowerCase())) {
           return Container(
             color: item.isPinned == 1
                 ? ref.watch(themeProvider).themeColor.pinColor()
@@ -1123,7 +1121,7 @@ class TaskItemCell extends StatelessWidget {
                       Material(
                         color: Colors.transparent,
                         child: Text(
-                          bean.schedule ?? "",
+                          bean.allSchedules.join(" | "),
                           maxLines: 1,
                           style: TextStyle(
                             overflow: TextOverflow.ellipsis,

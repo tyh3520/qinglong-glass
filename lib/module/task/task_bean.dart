@@ -4,11 +4,31 @@ import 'package:json_conversion_annotation/json_conversion_annotation.dart';
 
 import '../../main.dart';
 
+/// 青龙 2.19+ 的「附加定时规则」。
+/// 一个任务可以有多条定时规则：第 1 条存在 `schedule` 里，
+/// 其余的以 `[{ "schedule": "..." }]` 的形式存在 `extra_schedules` 里。
+class ExtraSchedule {
+  String? schedule;
+
+  ExtraSchedule({this.schedule});
+
+  ExtraSchedule.fromJson(Map<String, dynamic> json) {
+    schedule = json['schedule']?.toString();
+  }
+
+  Map<String, dynamic> toJson() {
+    return {"schedule": schedule};
+  }
+}
+
 @JsonConversion()
 class TaskBean {
   String? name;
   String? command;
   String? schedule;
+
+  /// 附加定时规则（对应青龙接口的 extra_schedules）
+  List<ExtraSchedule>? extraSchedules;
   bool? saved;
   String? sId;
   int? id;
@@ -41,15 +61,38 @@ class TaskBean {
       this.isPinned,
       this.lastExecutionTime,
       this.lastRunningTime,
+      this.extraSchedules,
       this.pid});
 
   get nId => _id;
+
+  /// 全部定时规则（主规则在前，附加规则在后），已过滤空值
+  List<String> get allSchedules {
+    final List<String> result = [];
+    final String main = schedule?.trim() ?? "";
+    if (main.isNotEmpty) result.add(main);
+    for (final item in extraSchedules ?? const <ExtraSchedule>[]) {
+      final String extra = item.schedule?.trim() ?? "";
+      if (extra.isNotEmpty) result.add(extra);
+    }
+    return result;
+  }
+
+  /// 用于列表页展示 / 搜索的单行文本
+  String get scheduleText => allSchedules.join(" ");
 
   TaskBean.fromJson(Map<String, dynamic> json) {
     try {
       name = json['name'].toString();
       command = json['command'].toString();
       schedule = json['schedule'].toString();
+      final rawExtraSchedules = json['extra_schedules'];
+      if (rawExtraSchedules is List) {
+        extraSchedules = rawExtraSchedules
+            .whereType<Map>()
+            .map((e) => ExtraSchedule.fromJson(Map<String, dynamic>.from(e)))
+            .toList();
+      }
       saved = json['saved'];
       id = json['id'];
       _id = json['_id'];
@@ -78,6 +121,7 @@ class TaskBean {
     data['name'] = this.name;
     data['command'] = this.command;
     data['schedule'] = this.schedule;
+    data['extra_schedules'] = this.extraSchedules?.map((e) => e.toJson()).toList();
     data['saved'] = this.saved;
     data['_id'] = this.sId;
     data['created'] = this.created;

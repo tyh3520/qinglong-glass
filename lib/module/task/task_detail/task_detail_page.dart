@@ -35,11 +35,25 @@ class _TaskDetailPageState extends ConsumerState<TaskDetailPage> with LazyLoadSt
 
   var nextRunTime = "".obs;
 
-  void getNextRunTime(String time) {
-    if (time.isEmpty) return;
+  /// 一个任务可能配置了多条定时规则，取其中最近的一次运行时间
+  void getNextRunTime(List<String> schedules) {
+    int? nearest;
+    for (final String schedule in schedules) {
+      final int? next = _nextRunTimeOf(schedule);
+      if (next != null && (nearest == null || next < nearest)) {
+        nearest = next;
+      }
+    }
+    nextRunTime.value = nearest == null ? "- -" : Utils.formatMessageTime(nearest);
+  }
+
+  /// 计算单条定时规则的下次运行时间（毫秒时间戳），无法解析时返回 null
+  int? _nextRunTimeOf(String time) {
+    String value = time.trim();
+    if (value.isEmpty) return null;
     try {
       String cronTime;
-      List<dynamic> timeList = time.split(" ");
+      List<dynamic> timeList = value.split(RegExp(r"\s+"));
       Duration duration;
       if (timeList.length > 5) {
         var first = timeList.first;
@@ -48,17 +62,16 @@ class _TaskDetailPageState extends ConsumerState<TaskDetailPage> with LazyLoadSt
 
         cronTime = timeList.sublist(1, timeList.length).join(" ");
       } else {
-        cronTime = time;
+        cronTime = value;
         duration = const Duration(seconds: 0);
       }
 
       var cronIterator = Cron().parse(cronTime, "Asia/Shanghai");
       TZDateTime nextDate = cronIterator.next();
       var result = nextDate.add(duration);
-      var resultStr = Utils.formatMessageTime(result.millisecondsSinceEpoch);
-      nextRunTime.value = resultStr;
+      return result.millisecondsSinceEpoch;
     } catch (e) {
-      nextRunTime.value = "- -";
+      return null;
     }
   }
 
@@ -157,7 +170,7 @@ class _TaskDetailPageState extends ConsumerState<TaskDetailPage> with LazyLoadSt
                       ),
                       TaskDetailCell(
                         title: "任务定时",
-                        desc: widget.taskBean.schedule ?? "",
+                        desc: widget.taskBean.allSchedules.join("\n"),
                       ),
                       Obx(() {
                         return TaskDetailCell(
@@ -422,7 +435,7 @@ class _TaskDetailPageState extends ConsumerState<TaskDetailPage> with LazyLoadSt
   void onLazyLoad() {
     isLoading = false;
     WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
-      getNextRunTime(widget.taskBean.schedule ?? "");
+      getNextRunTime(widget.taskBean.allSchedules);
     });
     setState(() {});
   }

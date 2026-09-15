@@ -234,8 +234,17 @@ class Api {
     String cron, {
     int? id,
     String? nId,
+    List<String>? extraCrons,
   }) async {
     var data = <String, dynamic>{"name": name, "command": command, "schedule": cron};
+
+    // 青龙 2.19+ 支持一个任务配置多条定时规则：
+    // schedule 为第 1 条规则，其余规则以 [{"schedule": "..."}] 放进 extra_schedules。
+    // 传 null 表示不下发该字段（兼容不支持该字段的老版本青龙）；
+    // 传空数组表示清空已有的附加规则。
+    if (extraCrons != null) {
+      data["extra_schedules"] = extraCrons.map((e) => {"schedule": e}).toList();
+    }
 
     if (id != null || nId != null) {
       if (id != null) {
